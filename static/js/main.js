@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshBtn = document.getElementById('refresh-btn');
     const refreshIcon = document.getElementById('refresh-icon');
     const exportBtn = document.getElementById('export-btn');
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
     const searchInput = document.getElementById('search-input');
     const lastUpdatedText = document.getElementById('last-updated-text');
     
@@ -161,6 +163,24 @@ ${textContent}`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    }
+
+    // Helper: Toggle theme between light and dark modes
+    function toggleTheme() {
+        const isLight = document.documentElement.classList.toggle('light-theme');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        updateThemeIcon(isLight);
+    }
+
+    function updateThemeIcon(isLight) {
+        if (isLight) {
+            themeIcon.setAttribute('data-lucide', 'moon');
+            themeToggle.title = 'Switch to Dark Mode';
+        } else {
+            themeIcon.setAttribute('data-lucide', 'sun');
+            themeToggle.title = 'Switch to Light Mode';
+        }
+        lucide.createIcons();
     }
 
     // Fetch Release Notes from API
@@ -373,6 +393,7 @@ ${textContent}`;
     // Event Listeners
     refreshBtn.addEventListener('click', fetchReleases);
     exportBtn.addEventListener('click', exportToCSV);
+    themeToggle.addEventListener('click', toggleTheme);
     retryBtn.addEventListener('click', fetchReleases);
     
     searchInput.addEventListener('input', (e) => {
@@ -382,6 +403,15 @@ ${textContent}`;
 
     tweetTextarea.addEventListener('input', updateCharCount);
     tweetBtn.addEventListener('click', handleTweet);
+
+    // Initial Theme Check from Storage
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.documentElement.classList.add('light-theme');
+        updateThemeIcon(true);
+    } else {
+        updateThemeIcon(false);
+    }
 
     // Initial Fetch
     fetchReleases();
