@@ -59,13 +59,34 @@
                     <div class="search-box">
                         <i data-lucide="search" class="search-icon"></i>
                         <input type="text" id="search-input" placeholder="Filter updates...">
+                        <button id="clear-search-btn" class="clear-search-btn hidden" title="Clear Search">
+                            <i data-lucide="x"></i>
+                        </button>
                     </div>
                 </div>
                 
                 <div class="releases-list-container">
-                    <div id="loading-state" class="state-container">
-                        <div class="spinner"></div>
-                        <p>Fetching the latest release notes...</p>
+                    <div id="loading-state" class="loading-skeleton-container">
+                        <div class="skeleton-card">
+                            <div class="skeleton-meta"></div>
+                            <div class="skeleton-title"></div>
+                            <div class="skeleton-snippet"></div>
+                        </div>
+                        <div class="skeleton-card">
+                            <div class="skeleton-meta"></div>
+                            <div class="skeleton-title"></div>
+                            <div class="skeleton-snippet"></div>
+                        </div>
+                        <div class="skeleton-card">
+                            <div class="skeleton-meta"></div>
+                            <div class="skeleton-title"></div>
+                            <div class="skeleton-snippet"></div>
+                        </div>
+                        <div class="skeleton-card">
+                            <div class="skeleton-meta"></div>
+                            <div class="skeleton-title"></div>
+                            <div class="skeleton-snippet"></div>
+                        </div>
                     </div>
                     
                     <div id="error-state" class="state-container hidden">
@@ -96,6 +117,10 @@
                 </div>
 
                 <div id="detail-content" class="detail-content hidden">
+                    <button id="back-to-list-btn" class="back-to-list-btn" title="Back to List">
+                        <i data-lucide="arrow-left"></i>
+                        <span>Back to List</span>
+                    </button>
                     <div class="detail-header-card">
                         <div class="detail-meta">
                             <span class="detail-date" id="detail-date">June 15, 2026</span>
@@ -135,10 +160,16 @@
                             <textarea id="tweet-textarea" class="tweet-textarea" rows="4" maxlength="280" placeholder="What's happening?"></textarea>
                             <div class="tweet-footer">
                                 <span class="char-counter" id="char-counter">280</span>
-                                <button id="tweet-btn" class="btn btn-twitter">
-                                    <i data-lucide="send"></i>
-                                    <span>Tweet This</span>
-                                </button>
+                                <div class="tweet-actions">
+                                    <button id="copy-tweet-btn" class="btn btn-secondary" title="Copy Tweet draft">
+                                        <i data-lucide="copy"></i>
+                                        <span>Copy Draft</span>
+                                    </button>
+                                    <button id="tweet-btn" class="btn btn-twitter">
+                                        <i data-lucide="send"></i>
+                                        <span>Tweet This</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -146,6 +177,9 @@
             </section>
         </main>
     </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom JavaScript -->
     <script src="/static/js/main.js"></script>

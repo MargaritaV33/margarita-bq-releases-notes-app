@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeToggle = document.getElementById('theme-toggle');
     const themeIcon = document.getElementById('theme-icon');
     const searchInput = document.getElementById('search-input');
+    const clearSearchBtn = document.getElementById('clear-search-btn');
     const lastUpdatedText = document.getElementById('last-updated-text');
     
     // States
@@ -19,10 +20,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const emptyState = document.getElementById('empty-state');
     const retryBtn = document.getElementById('retry-btn');
     const releasesList = document.getElementById('releases-list');
+    const toastContainer = document.getElementById('toast-container');
     
     // Details Pane
+    const detailSection = document.getElementById('detail-section');
     const noSelectionState = document.getElementById('no-selection-state');
     const detailContent = document.getElementById('detail-content');
+    const backToListBtn = document.getElementById('back-to-list-btn');
     const detailTitle = document.getElementById('detail-title');
     const detailDate = document.getElementById('detail-date');
     const detailTag = document.getElementById('detail-tag');
@@ -33,6 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const tweetTextarea = document.getElementById('tweet-textarea');
     const charCounter = document.getElementById('char-counter');
     const tweetBtn = document.getElementById('tweet-btn');
+    const copyTweetBtn = document.getElementById('copy-tweet-btn');
+
+    // Read/Unread State Management
+    let readReleases = new Set(JSON.parse(localStorage.getItem('readReleases') || '[]'));
 
     // Initialize Lucide Icons
     lucide.createIcons();
@@ -82,6 +90,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Helper: Toast Notifications
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        
+        let iconName = 'info';
+        if (type === 'success') iconName = 'check-circle';
+        if (type === 'error') iconName = 'alert-circle';
+        
+        toast.innerHTML = `
+            <i data-lucide="${iconName}" class="toast-icon"></i>
+            <span>${message}</span>
+        `;
+        
+        toastContainer.appendChild(toast);
+        lucide.createIcons();
+        
+        // Auto-remove after 3.2 seconds
+        setTimeout(() => {
+            toast.classList.add('removing');
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 3200);
+    }
+
     // Helper: Copy individual release note to clipboard
     function copyItemToClipboard(item, btn) {
         const dateStr = formatDate(item.updated);
@@ -96,6 +130,7 @@ Description:
 ${textContent}`;
 
         navigator.clipboard.writeText(formattedText).then(() => {
+            showToast('Copied to clipboard!', 'success');
             // Success animation
             const icon = btn.querySelector('i');
             icon.setAttribute('data-lucide', 'check');
@@ -113,13 +148,14 @@ ${textContent}`;
             }, 1500);
         }).catch(err => {
             console.error('Failed to copy text: ', err);
+            showToast('Failed to copy to clipboard', 'error');
         });
     }
 
     // Helper: Export releases to CSV
     function exportToCSV() {
         if (releases.length === 0) {
-            alert('No data available to export.');
+            showToast('No data available to export.', 'error');
             return;
         }
 
@@ -163,6 +199,7 @@ ${textContent}`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        showToast('Successfully exported to CSV!', 'success');
     }
 
     // Helper: Toggle theme between light and dark modes
@@ -208,6 +245,7 @@ ${textContent}`;
                 lastUpdatedText.textContent = `Updated: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
                 
                 renderList();
+                showToast('Feed refreshed successfully!', 'success');
             } else {
                 throw new Error(data.message || 'API returned an error state');
             }
@@ -216,6 +254,7 @@ ${textContent}`;
             document.getElementById('error-message').textContent = `Error: ${error.message}`;
             errorState.classList.remove('hidden');
             loadingState.classList.add('hidden');
+            showToast('Failed to load release notes.', 'error');
         } finally {
             refreshIcon.classList.remove('spinning');
             refreshBtn.disabled = false;
@@ -254,10 +293,13 @@ ${textContent}`;
             
             const snippet = createTextSnippet(item.content, 90);
             const displayDate = formatDate(item.updated);
+            
+            const isUnread = !readReleases.has(item.id);
+            const unreadDot = isUnread ? '<span class="unread-indicator" title="Unread Update"></span>' : '';
 
             li.innerHTML = `
                 <div class="item-meta">
-                    <span class="item-date">${displayDate}</span>
+                    <span class="item-date">${unreadDot}${displayDate}</span>
                     <span class="badge ${tagInfo.class}">${tagInfo.label}</span>
                 </div>
                 <div class="item-title">${item.title}</div>
@@ -277,13 +319,14 @@ ${textContent}`;
             releasesList.appendChild(li);
         });
 
-        // Auto-select first item if nothing is selected yet
-        if (!activeReleaseId && filteredReleases.length > 0) {
+        // Auto-select first item if nothing is selected yet (only on desktop/screens > 900px to avoid auto-sliding)
+        const isDesktop = window.innerWidth > 900;
+        if (isDesktop && !activeReleaseId && filteredReleases.length > 0) {
             selectRelease(filteredReleases[0].id);
         } else if (activeReleaseId) {
             // Check if currently active release is still in the filtered list
             const stillExists = filteredReleases.some(item => item.id === activeReleaseId);
-            if (!stillExists && filteredReleases.length > 0) {
+            if (isDesktop && !stillExists && filteredReleases.length > 0) {
                 selectRelease(filteredReleases[0].id);
             }
         }
@@ -302,12 +345,25 @@ ${textContent}`;
             }
         });
 
+        // Mark as read
+        if (!readReleases.has(id)) {
+            readReleases.add(id);
+            localStorage.setItem('readReleases', JSON.stringify(Array.from(readReleases)));
+            // Remove unread dot indicator
+            const itemElement = document.querySelector(`.release-item[data-id="${CSS.escape(id)}"]`);
+            if (itemElement) {
+                const dot = itemElement.querySelector('.unread-indicator');
+                if (dot) dot.remove();
+            }
+        }
+
         const release = releases.find(item => item.id === id);
         if (!release) return;
 
-        // Show details panel
+        // Show details panel & slide in on mobile
         noSelectionState.classList.add('hidden');
         detailContent.classList.remove('hidden');
+        detailSection.classList.add('active');
 
         // Populate details
         detailTitle.textContent = release.title;
@@ -396,9 +452,56 @@ ${textContent}`;
     themeToggle.addEventListener('click', toggleTheme);
     retryBtn.addEventListener('click', fetchReleases);
     
+    // Search input clear button toggling
     searchInput.addEventListener('input', (e) => {
         searchQuery = e.target.value;
+        if (searchQuery.length > 0) {
+            clearSearchBtn.classList.remove('hidden');
+        } else {
+            clearSearchBtn.classList.add('hidden');
+        }
         renderList();
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        searchQuery = '';
+        clearSearchBtn.classList.add('hidden');
+        renderList();
+    });
+
+    // Mobile Navigation Back Button
+    backToListBtn.addEventListener('click', () => {
+        detailSection.classList.remove('active');
+    });
+
+    // Copy Tweet Draft to Clipboard
+    copyTweetBtn.addEventListener('click', () => {
+        const text = tweetTextarea.value;
+        if (!text) return;
+        
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Tweet draft copied!', 'success');
+            // Success button state
+            const icon = copyTweetBtn.querySelector('i');
+            const label = copyTweetBtn.querySelector('span');
+            icon.setAttribute('data-lucide', 'check');
+            label.textContent = 'Copied!';
+            copyTweetBtn.style.borderColor = 'var(--tag-feature)';
+            copyTweetBtn.style.color = 'var(--tag-feature)';
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                icon.setAttribute('data-lucide', 'copy');
+                label.textContent = 'Copy Draft';
+                copyTweetBtn.style.borderColor = '';
+                copyTweetBtn.style.color = '';
+                lucide.createIcons();
+            }, 1500);
+        }).catch(err => {
+            console.error('Failed to copy tweet draft: ', err);
+            showToast('Failed to copy draft', 'error');
+        });
     });
 
     tweetTextarea.addEventListener('input', updateCharCount);
