@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const refreshBtn = document.getElementById('refresh-btn');
     const refreshIcon = document.getElementById('refresh-icon');
+    const exportBtn = document.getElementById('export-btn');
     const searchInput = document.getElementById('search-input');
     const lastUpdatedText = document.getElementById('last-updated-text');
     
@@ -77,6 +78,89 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             return dateStr;
         }
+    }
+
+    // Helper: Copy individual release note to clipboard
+    function copyItemToClipboard(item, btn) {
+        const dateStr = formatDate(item.updated);
+        const tagInfo = determineTag(item.title, item.content);
+        const textContent = stripHtml(item.content).trim();
+        
+        const formattedText = `BigQuery Release Note (${dateStr}) [${tagInfo.label}]
+Title: ${item.title}
+Link: ${item.link}
+
+Description:
+${textContent}`;
+
+        navigator.clipboard.writeText(formattedText).then(() => {
+            // Success animation
+            const icon = btn.querySelector('i');
+            icon.setAttribute('data-lucide', 'check');
+            btn.style.backgroundColor = 'var(--tag-feature-bg)';
+            btn.style.color = 'var(--tag-feature)';
+            btn.style.borderColor = 'var(--tag-feature)';
+            lucide.createIcons();
+
+            setTimeout(() => {
+                icon.setAttribute('data-lucide', 'copy');
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+                btn.style.borderColor = '';
+                lucide.createIcons();
+            }, 1500);
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+
+    // Helper: Export releases to CSV
+    function exportToCSV() {
+        if (releases.length === 0) {
+            alert('No data available to export.');
+            return;
+        }
+
+        const headers = ['Date', 'Title', 'Tag', 'Link', 'Description'];
+        const rows = releases.map(item => {
+            const dateStr = formatDate(item.updated);
+            const tagInfo = determineTag(item.title, item.content);
+            const plainContent = stripHtml(item.content).trim().replace(/\s+/g, ' ');
+            
+            return [
+                dateStr,
+                item.title,
+                tagInfo.label,
+                item.link,
+                plainContent
+            ];
+        });
+
+        // Helper: Escape CSV cells
+        const escapeCSV = (val) => {
+            if (val === null || val === undefined) return '';
+            let stringVal = val.toString();
+            stringVal = stringVal.replace(/"/g, '""');
+            if (stringVal.includes(',') || stringVal.includes('"') || stringVal.includes('\n') || stringVal.includes('\r')) {
+                stringVal = `"${stringVal}"`;
+            }
+            return stringVal;
+        };
+
+        const csvContent = [
+            headers.map(escapeCSV).join(','),
+            ...rows.map(row => row.map(escapeCSV).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'bigquery_release_notes.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     // Fetch Release Notes from API
@@ -158,7 +242,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="item-title">${item.title}</div>
                 <div class="item-snippet">${snippet}</div>
+                <button class="btn-copy-card" title="Copy to Clipboard">
+                    <i data-lucide="copy"></i>
+                </button>
             `;
+
+            const copyBtn = li.querySelector('.btn-copy-card');
+            copyBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent card selection
+                copyItemToClipboard(item, copyBtn);
+            });
 
             li.addEventListener('click', () => selectRelease(item.id));
             releasesList.appendChild(li);
@@ -279,6 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event Listeners
     refreshBtn.addEventListener('click', fetchReleases);
+    exportBtn.addEventListener('click', exportToCSV);
     retryBtn.addEventListener('click', fetchReleases);
     
     searchInput.addEventListener('input', (e) => {

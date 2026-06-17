@@ -376,6 +376,36 @@ body {
     background-color: var(--bg-hover);
 }
 
+.btn-copy-card {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: var(--transition-fast);
+    z-index: 5;
+}
+
+.btn-copy-card:hover {
+    color: var(--text-primary);
+    background-color: var(--accent-primary);
+    border-color: var(--accent-primary);
+    box-shadow: var(--glow-shadow);
+}
+
+.release-item:hover .btn-copy-card {
+    opacity: 1;
+}
+
 .release-item.active {
     background-color: var(--bg-active);
 }
