@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Tracker</title>
+    <!-- Google Fonts: Inter & JetBrains Mono for code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Lucide Icons for clean vector icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation / Logo & Actions -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i data-lucide="database" class="icon-primary"></i>
+                    <div class="logo-pulse"></div>
+                </div>
+                <div class="logo-text">
+                    <h1>BigQuery</h1>
+                    <span class="sub-logo">Release Notes Tracker</span>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div class="last-updated-badge">
+                    <span class="pulse-dot"></span>
+                    <span id="last-updated-text">Checking feed...</span>
+                </div>
+                
+                <button id="refresh-btn" class="btn btn-primary" title="Refresh Release Notes">
+                    <i data-lucide="refresh-cw" id="refresh-icon"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <main class="app-content">
+            <!-- Left Side: List of Release Notes -->
+            <section class="list-section">
+                <div class="section-header">
+                    <h2>Recent Updates</h2>
+                    <div class="search-box">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="search-input" placeholder="Filter updates...">
+                    </div>
+                </div>
+                
+                <div class="releases-list-container">
+                    <div id="loading-state" class="state-container">
+                        <div class="spinner"></div>
+                        <p>Fetching the latest release notes...</p>
+                    </div>
+                    
+                    <div id="error-state" class="state-container hidden">
+                        <i data-lucide="alert-triangle" class="icon-error"></i>
+                        <p id="error-message">Failed to load release notes.</p>
+                        <button id="retry-btn" class="btn btn-secondary mt-3">Try Again</button>
+                    </div>
+                    
+                    <div id="empty-state" class="state-container hidden">
+                        <i data-lucide="inbox" class="icon-empty"></i>
+                        <p>No release notes found matching your criteria.</p>
+                    </div>
+                    
+                    <ul id="releases-list" class="releases-list hidden">
+                        <!-- Populated by JavaScript -->
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Right Side: Details & Tweet Composer -->
+            <section class="detail-section" id="detail-section">
+                <div id="no-selection-state" class="state-container full-height">
+                    <div class="no-selection-content">
+                        <i data-lucide="newspaper" class="icon-placeholder"></i>
+                        <h3>Select an Update</h3>
+                        <p>Choose a release note from the list to view its contents, check code changes, or tweet about it.</p>
+                    </div>
+                </div>
+
+                <div id="detail-content" class="detail-content hidden">
+                    <div class="detail-header-card">
+                        <div class="detail-meta">
+                            <span class="detail-date" id="detail-date">June 15, 2026</span>
+                            <span class="detail-tag" id="detail-tag">Feature</span>
+                        </div>
+                        <h2 class="detail-title" id="detail-title">BigQuery Update Title</h2>
+                        <a id="detail-link" href="#" target="_blank" class="external-link">
+                            <span>View Official Documentation</span>
+                            <i data-lucide="external-link"></i>
+                        </a>
+                    </div>
+
+                    <div class="detail-body-container">
+                        <div class="detail-body" id="detail-body">
+                            <!-- Release Note HTML goes here -->
+                        </div>
+                    </div>
+
+                    <!-- Tweet Section -->
+                    <div class="tweet-composer-card">
+                        <div class="composer-header">
+                            <div class="composer-title-group">
+                                <i data-lucide="twitter" class="icon-twitter"></i>
+                                <h3>Share this Update</h3>
+                            </div>
+                            <span class="composer-subtitle">Draft a tweet to share this release note</span>
+                        </div>
+                        
+                        <div class="tweet-preview-box">
+                            <div class="tweet-header">
+                                <div class="tweet-avatar">BQ</div>
+                                <div class="tweet-user-info">
+                                    <span class="tweet-name">BigQuery News</span>
+                                    <span class="tweet-handle">@BigQueryUpdates</span>
+                                </div>
+                            </div>
+                            <textarea id="tweet-textarea" class="tweet-textarea" rows="4" maxlength="280" placeholder="What's happening?"></textarea>
+                            <div class="tweet-footer">
+                                <span class="char-counter" id="char-counter">280</span>
+                                <button id="tweet-btn" class="btn btn-twitter">
+                                    <i data-lucide="send"></i>
+                                    <span>Tweet This</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Custom JavaScript -->
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
